@@ -13,4 +13,4 @@ RUN unzip -q -d /opt/gradle gradle-bin.zip
 RUN rm gradle-bin.zip
 
 ENV JAVA_HOME "/jdk1.8.0_161"
-ENV PATH "${PATH}:${JAVA_HOME}/bin:/opt/gradle/gradle-4.6/bin"
+ENV PATH "${PATH}:${JAVA_HOME}/bin:/opt/gradle/gradle-4.7/bin"
