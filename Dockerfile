@@ -12,5 +12,5 @@ RUN mkdir -p /opt/gradle
 RUN unzip -q -d /opt/gradle gradle-bin.zip
 RUN rm gradle-bin.zip
 
-ENV JAVA_HOME "/jdk10.0.1"
+ENV JAVA_HOME "/jdk-10.0.1"
 ENV PATH "${PATH}:${JAVA_HOME}/bin:/opt/gradle/gradle-4.7/bin"
