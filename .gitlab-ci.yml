@@ -1,0 +1,77 @@
+stages:
+    - build
+    - deploy
+
+image: docker:latest
+
+services:
+    - docker:dind
+
+variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_IMAGE: $CI_PROJECT_NAME:$CI_COMMIT_SHA
+
+build:
+    stage: build
+    script:
+        - docker build --pull -t "$DOCKER_IMAGE" .
+    after_script:
+        - docker save -o "$DOCKER_IMAGE.tar" "$DOCKER_IMAGE"
+    artifacts:
+        paths:
+            - "$DOCKER_IMAGE.tar"
+
+.registry: &registry
+    stage: deploy
+    before_script:
+        - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+        - docker load -i "$DOCKER_IMAGE.tar"
+    after_script:
+        - docker logout $CI_REGISTRY
+
+registry-latest:
+    <<: *registry
+    only:
+        - master
+    environment:
+        name: GitLab Registry
+        url: $CI_PROJECT_URL/container_registry
+    script:
+        - docker tag "$DOCKER_IMAGE" "$CI_REGISTRY_IMAGE:latest"
+        - docker push "$CI_REGISTRY_IMAGE:latest"
+
+registry-tag:
+    <<: *registry
+    only:
+        - tags
+    script:
+        - docker tag "$DOCKER_IMAGE" "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+        - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
+
+.hub: &hub
+    stage: deploy
+    before_script:
+        - echo "$HUB_PASSWORD" | docker login -u "$GITLAB_USER_LOGIN" --password-stdin
+        - docker load -i "$DOCKER_IMAGE.tar"
+    after_script:
+        - docker logout
+
+hub-latest:
+    <<: *hub
+    only:
+        - master
+    environment:
+        name: Docker Hub
+        url: https://hub.docker.com/r/$CI_PROJECT_PATH
+    script:
+        - docker tag "$DOCKER_IMAGE" "$CI_PROJECT_PATH:latest"
+        - docker push "$CI_PROJECT_PATH:latest"
+
+hub-tag:
+    <<: *hub
+    only:
+        - tags
+    script:
+        - docker tag "$DOCKER_IMAGE" "$CI_PROJECT_PATH:$CI_COMMIT_TAG"
+        - docker push "$CI_PROJECT_PATH:$CI_COMMIT_TAG"
