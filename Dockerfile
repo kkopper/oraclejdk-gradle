@@ -22,12 +22,12 @@ RUN wget -q --no-check-certificate --no-cookies \
 
 # Install Gradle
 ARG gradle=4.9
-RUN wget -q --output-document=gradle-bin.zip \
-        https://services.gradle.org/distributions/gradle-4.9-bin.zip && \
+RUN wget -q --no-check-certificate --output-document=gradle-bin.zip \
+        https://services.gradle.org/distributions/gradle-${gradle}-bin.zip && \
     mkdir -p /opt/gradle && \
     unzip -q -d /opt/gradle gradle-bin.zip && \
     rm gradle-bin.zip
 
 # Set environment variables
 ENV JAVA_HOME "/jdk-${jdk}"
-ENV PATH "${PATH}:${JAVA_HOME}/bin:/opt/gradle/gradle-4.9/bin"
+ENV PATH "${PATH}:${JAVA_HOME}/bin:/opt/gradle/gradle-${gradle}/bin"
