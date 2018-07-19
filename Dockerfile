@@ -1,12 +1,14 @@
 FROM ubuntu:latest
 
-MAINTAINER Konstantin Kopper
+LABEL maintainer="Konstantin Kopper"
 
 # Install required packages
-RUN apt-get -qq update --yes && apt-get -qq install --yes \
+RUN apt-get -qq update --yes \
+ && apt-get -qq install --yes --no-install-recommends \
     wget \
     tar \
-    unzip
+    unzip \
+ && rm -rf /var/lib/apt/lists/*
 
 # Install Oracle JDK
 ARG jdk=10.0.2

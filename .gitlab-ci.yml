@@ -12,6 +12,13 @@ variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_IMAGE: $CI_PROJECT_NAME:$CI_COMMIT_SHA
 
+hadolint:
+    stage: lint
+    image: hadolint/hadolint:latest-debian
+    services: []
+    script:
+        - hadolint Dockerfile
+
 build:
     stage: build
     script:
