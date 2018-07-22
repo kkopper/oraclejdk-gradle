@@ -12,24 +12,43 @@ services:
 variables:
     DOCKER_DRIVER: overlay2
     DOCKER_HOST: tcp://docker:2375
-    DOCKER_IMAGE: $CI_PROJECT_NAME:$CI_COMMIT_SHA
+    DOCKER_IMAGE: $CI_REGISTRY_IMAGE/commit:$CI_COMMIT_SHA
+
+.registry_login: &registry_login
+    echo "CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+
+before_script:
+    - *registry_login
+
+after_script:
+    - docker logout "$CI_REGISTRY"
 
 hadolint:
     stage: lint
     image: hadolint/hadolint:latest-debian
     services: []
+    before_script: []
     script:
         - hadolint Dockerfile
+    after_script: []
 
 build:
     stage: build
+    before_script:
+        - token=$( wget -q -O - "https://gitlab.com/jwt/auth?service=container_registry&scope=repository:${CI_PROJECT_PATH}/commit:pull" | sed -e 's/^{"token":"\(.*\)"}$/\1/g' )
+        - >-
+            wget -q -O - --header="Authorization: Bearer ${token}" "https://${CI_REGISTRY}/v2/${CI_PROJECT_PATH}/commit/tags/list" |
+            sed -e 's/^.*"tags":\[\(.*\)\].*$/\1/g' |
+            tr -d \" | tr , '\n' |
+            grep -E -q -e "$CI_COMMIT_SHA" &&
+            {
+            echo "Image for commit $CI_COMMIT_SHA already exists. No need to build it again." ;
+            exit 0 ;
+            }
+        - *registry_login
     script:
         - docker build --pull -t "$DOCKER_IMAGE" .
-    after_script:
-        - docker save -o "$DOCKER_IMAGE.tar" "$DOCKER_IMAGE"
-    artifacts:
-        paths:
-            - "$DOCKER_IMAGE.tar"
+        - docker push "$DOCKER_IMAGE"
 
 container_scanning:
     stage: check
@@ -37,7 +56,8 @@ container_scanning:
     only:
         - branches
     before_script:
-        - docker load -i "$DOCKER_IMAGE.tar"
+        - *registry_login
+        - docker pull "$DOCKER_IMAGE"
     script:
         - docker run -d --name db arminc/clair-db:latest
         - docker run -p 6060:6060 --link db:postgres -d --name clair --restart on-failure arminc/clair-local-scan:v2.0.1
@@ -45,7 +65,7 @@ container_scanning:
         - wget -q -O clair-scanner https://github.com/arminc/clair-scanner/releases/download/v8/clair-scanner_linux_amd64
         - chmod +x clair-scanner
         - while( ! wget -q -O /dev/null http://docker:6060/v1/namespaces ) ; do sleep 1 ; done
-        - ( retries=0 ; while( ! wget -T 10 -q -O /dev/null http://docker:6060/v1/namespaces ) ; do sleep 1 ; if [ $retries -eq 10 ] ; then echo "Timeout when connecting to clair daemon." >&2 ; exit 1 ; fi ; retries=$(($retries+1)) ; done )
+        - ( retries=0 ; while( ! wget -T 10 -q -O /dev/null http://docker:6060/v1/namespaces ) ; do sleep 1 ; if [ $retries -eq 10 ] ; then echo "Timeout when connecting to claire daemon." >&2 ; exit 1 ; fi ; retries=$(($retries+1)) ; done )
         - ./clair-scanner -c http://docker:6060 --ip $(hostname -i) -r gl-container-scanning-report.json -l clair.log ${DOCKER_IMAGE} || true
     artifacts:
         when: always
@@ -60,10 +80,8 @@ container_scanning:
 .registry: &registry
     <<: *deploy
     before_script:
-        - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-        - docker load -i "$DOCKER_IMAGE.tar"
-    after_script:
-        - docker logout $CI_REGISTRY
+        - *registry_login
+        - docker pull "$DOCKER_IMAGE"
 
 registry-latest:
     <<: *registry
@@ -87,10 +105,12 @@ registry-tag:
 .hub: &hub
     <<: *deploy
     before_script:
+        - *registry_login
         - echo "$HUB_PASSWORD" | docker login -u "$GITLAB_USER_LOGIN" --password-stdin
-        - docker load -i "$DOCKER_IMAGE.tar"
+        - docker pull "$DOCKER_IMAGE"
     after_script:
         - docker logout
+        - docker logout "$CI_REGISTRY"
 
 hub-latest:
     <<: *hub
