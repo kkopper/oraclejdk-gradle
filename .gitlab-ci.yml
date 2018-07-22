@@ -44,7 +44,7 @@ build:
             {
             echo "Image for commit $CI_COMMIT_SHA already exists. No need to build it again." ;
             exit 0 ;
-            }
+            } || true
         - *registry_login
     script:
         - docker build --pull -t "$DOCKER_IMAGE" .
