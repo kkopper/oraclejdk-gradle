@@ -15,7 +15,7 @@ variables:
     DOCKER_IMAGE: $CI_REGISTRY_IMAGE/commit:$CI_COMMIT_SHA
 
 .registry_login: &registry_login
-    echo "CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
 
 before_script:
     - *registry_login
