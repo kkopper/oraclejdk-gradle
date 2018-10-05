@@ -21,7 +21,7 @@ RUN wget -q --no-check-certificate --no-cookies \
     rm oracle-jdk.tar.gz
 
 # Install Gradle
-ARG gradle=4.10
+ARG gradle=4.10.2
 RUN wget -q --no-check-certificate --output-document=gradle-bin.zip \
         https://services.gradle.org/distributions/gradle-${gradle}-bin.zip && \
     mkdir -p /opt/gradle && \
