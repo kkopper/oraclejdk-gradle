@@ -12,7 +12,7 @@ RUN apt-get -qq update --yes \
 
 # Install Oracle JDK
 ARG jdk=10.0.2
-ARG jdk_link=http://download.oracle.com/otn-pub/java/jdk/10.0.2+13/19aef61b38124481863b1413dce1855f/jdk-10.0.2_linux-x64_bin.tar.gz
+ARG jdk_link=https://download.oracle.com/otn/java/jdk/10.0.2+13/19aef61b38124481863b1413dce1855f/jdk-10.0.2_linux-x64_bin.tar.gz
 RUN wget -q --no-check-certificate --no-cookies \
         --header "Cookie: oraclelicense=accept-securebackup-cookie" \
         --output-document=oracle-jdk.tar.gz \
