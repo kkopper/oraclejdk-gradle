@@ -11,8 +11,8 @@ RUN apt-get -qq update --yes \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Oracle JDK
-ARG jdk=10.0.2
-ARG jdk_link=https://download.oracle.com/otn/java/jdk/10.0.2+13/19aef61b38124481863b1413dce1855f/jdk-10.0.2_linux-x64_bin.tar.gz
+ARG jdk=1.8.0_191
+ARG jdk_link=https://download.oracle.com/otn-pub/java/jdk/8u191-b12/2787e4a523244c269598db4e85c51e0c/jdk-8u191-linux-x64.tar.gz
 RUN wget -q --no-check-certificate --no-cookies \
         --header "Cookie: oraclelicense=accept-securebackup-cookie" \
         --output-document=oracle-jdk.tar.gz \
@@ -29,5 +29,6 @@ RUN wget -q --no-check-certificate --output-document=gradle-bin.zip \
     rm gradle-bin.zip
 
 # Set environment variables
-ENV JAVA_HOME "/jdk-${jdk}"
+#ENV JAVA_HOME "/jdk-${jdk}"
+ENV JAVA_HOME "/jdk${jdk}"
 ENV PATH "${PATH}:${JAVA_HOME}/bin:/opt/gradle/gradle-${gradle}/bin"
