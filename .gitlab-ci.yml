@@ -26,6 +26,10 @@ after_script:
 hadolint:
   stage: lint
   image: hadolint/hadolint:latest-debian
+  only:
+    changes:
+      - Dockerfile
+      - .hadolint.yaml
   services: []
   before_script: []
   script:
@@ -34,6 +38,9 @@ hadolint:
 
 build:
   stage: build
+  only:
+    changes:
+      - Dockerfile
   before_script:
     - token=$( wget -q -O - "https://gitlab.com/jwt/auth?service=container_registry&scope=repository:${CI_PROJECT_PATH}/commit:pull" | sed -e 's/^{"token":"\(.*\)"}$/\1/g' )
     - >-
@@ -54,7 +61,11 @@ container_scanning:
   stage: check
   allow_failure: true
   only:
-    - branches
+    changes:
+      - Dockerfile
+  except:
+    refs:
+      - tags
   before_script:
     - *registry_login
     - docker pull "$DOCKER_IMAGE"
@@ -85,7 +96,10 @@ container_scanning:
 registry-latest:
   <<: *registry
   only:
-    - master
+    refs:
+      - master
+    changes:
+      - Dockerfile
   environment:
     name: GitLab Registry
     url: $CI_PROJECT_URL/container_registry
@@ -96,7 +110,10 @@ registry-latest:
 registry-tag:
   <<: *registry
   only:
-    - tags
+    refs:
+      - tags
+    changes:
+      - Dockerfile
   script:
     - docker tag "$DOCKER_IMAGE" "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG"
@@ -114,7 +131,10 @@ registry-tag:
 hub-latest:
   <<: *hub
   only:
-    - master
+    refs:
+      - master
+    changes:
+      - Dockerfile
   environment:
     name: Docker Hub
     url: https://hub.docker.com/r/$CI_PROJECT_PATH
@@ -125,7 +145,10 @@ hub-latest:
 hub-tag:
   <<: *hub
   only:
-    - tags
+    refs:
+      - tags
+    changes:
+      - Dockerfile
   script:
     - docker tag "$DOCKER_IMAGE" "$CI_PROJECT_PATH:$CI_COMMIT_TAG"
     - docker push "$CI_PROJECT_PATH:$CI_COMMIT_TAG"
