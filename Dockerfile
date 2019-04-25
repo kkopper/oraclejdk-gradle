@@ -11,8 +11,8 @@ RUN apt-get -qq update --yes \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Oracle JDK
-ARG jdk=1.8.0_201
-ARG jdk_link=https://download.oracle.com/otn-pub/java/jdk/8u201-b09/42970487e3af4f5aa5bca3f542482c60/jdk-8u201-linux-x64.tar.gz
+ARG jdk=1.8.0_211
+ARG jdk_link=https://download.oracle.com/otn/java/jdk/8u211-b12/478a62b7d4e34b78b671c754eaaf38ab/jdk-8u211-linux-x64.tar.gz
 RUN wget -q --no-check-certificate --no-cookies \
         --header "Cookie: oraclelicense=accept-securebackup-cookie" \
         --output-document=oracle-jdk.tar.gz \
